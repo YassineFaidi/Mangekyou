@@ -165,8 +165,7 @@ mangekyou/
 
 ## 👤 Author
 
-Final Year Cybersecurity Engineering Project
-Built on Kali Linux using the ELK Stack
+FAIDI Yassine
 
 ---
 
