@@ -173,3 +173,40 @@ Built on Kali Linux using the ELK Stack
 <div align="center">
 <i>The Mangekyou Sharingan sees through deception.<br>So does this SIEM.</i>
 </div>
+
+---
+
+## 🚀 Correct Deployment Order (For Fresh Install)
+```bash
+# 1. Clone
+git clone https://github.com/YOUR_USERNAME/mangekyou.git
+cd mangekyou
+
+# 2. Prepare host
+sudo sysctl -w vm.max_map_count=262144
+sudo usermod -aG docker $USER && newgrp docker
+
+# 3. Start the stack
+docker compose up -d
+
+# 4. Fix cluster health (run this always)
+./scripts/fix-cluster.sh
+
+# 5. Generate Kibana token (REQUIRED on every fresh install)
+./scripts/setup-token.sh
+
+# 6. Set up Kibana
+./scripts/setup-kibana.sh
+
+# 7. Load detection rules
+./scripts/setup-rules.sh
+
+# 8. Build dashboards
+./scripts/setup-dashboards.sh
+
+# 9. Test detections
+./scripts/test-detections.sh
+
+# 10. Check everything
+./scripts/mangekyou-status.sh
+```
