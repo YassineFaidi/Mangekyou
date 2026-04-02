@@ -1,0 +1,28 @@
+name: Mangekyou - Port Scan Detection
+type: frequency
+index: mangekyou-logs-*
+
+# Trigger if 20 connection attempts in 1 minute
+num_events: 20
+timeframe:
+  minutes: 1
+
+filter:
+  - query:
+      query_string:
+        query: 'message:*"Connection refused"* OR message:*"connect to"* OR message:*"port scan"*'
+
+alert:
+  - debug
+
+alert_text: |
+  👁️ MANGEKYOU ALERT — PORT SCAN DETECTED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Rule:        Port Scan Detection
+  MITRE:       T1046 - Network Service Discovery
+  Severity:    MEDIUM
+  Events:      {num_hits} connection attempts in 1 minute
+  Time:        {time}
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+alert_text_type: alert_text_only

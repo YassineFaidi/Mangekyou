@@ -1,0 +1,23 @@
+name: Mangekyou - New User Account Created
+type: any
+index: mangekyou-logs-*
+
+filter:
+  - query:
+      query_string:
+        query: 'message:*"new user"* OR message:*"useradd"* OR message:*"adduser"*'
+
+alert:
+  - debug
+
+alert_text: |
+  👁️ MANGEKYOU ALERT — NEW USER ACCOUNT CREATED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Rule:        New User Account Created
+  MITRE:       T1136 - Create Account
+  Severity:    HIGH
+  Time:        {time}
+  Message:     {message}
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+alert_text_type: alert_text_only

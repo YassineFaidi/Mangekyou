@@ -1,0 +1,28 @@
+name: Mangekyou - SSH Brute Force Detection
+type: frequency
+index: mangekyou-logs-*
+
+# Trigger if 5 failed SSH attempts in 1 minute
+num_events: 5
+timeframe:
+  minutes: 1
+
+filter:
+  - query:
+      query_string:
+        query: 'message:*"Failed password"* OR message:*"Invalid user"*'
+
+alert:
+  - debug
+
+alert_text: |
+  👁️ MANGEKYOU ALERT — SSH BRUTE FORCE DETECTED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Rule:        SSH Brute Force Detection
+  MITRE:       T1110.001 - Brute Force: Password Guessing
+  Severity:    HIGH
+  Events:      {num_hits} failed attempts in 1 minute
+  Time:        {time}
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+alert_text_type: alert_text_only

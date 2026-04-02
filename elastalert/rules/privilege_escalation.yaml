@@ -1,0 +1,27 @@
+name: Mangekyou - Privilege Escalation Detection
+type: frequency
+index: mangekyou-logs-*
+
+num_events: 3
+timeframe:
+  minutes: 5
+
+filter:
+  - query:
+      query_string:
+        query: 'message:*"sudo"* OR message:*"su root"* OR message:*"NOPASSWD"* OR message:*"TTY=unknown"*'
+
+alert:
+  - debug
+
+alert_text: |
+  👁️ MANGEKYOU ALERT — PRIVILEGE ESCALATION DETECTED
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Rule:        Privilege Escalation Detection
+  MITRE:       T1548 - Abuse Elevation Control Mechanism
+  Severity:    CRITICAL
+  Events:      {num_hits} sudo/su attempts in 5 minutes
+  Time:        {time}
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+alert_text_type: alert_text_only
