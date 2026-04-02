@@ -82,28 +82,39 @@ Host Logs ──▶ Filebeat ──▶ Logstash ──▶ Elasticsearch ──�
 
 ### Deploy Mangekyou
 ```bash
-# Clone the repository
+# 1. Clone
 git clone https://github.com/YOUR_USERNAME/mangekyou.git
 cd mangekyou
 
-# Set vm.max_map_count for Elasticsearch
+# 2. Prepare host
 sudo sysctl -w vm.max_map_count=262144
+sudo usermod -aG docker $USER && newgrp docker
 
-# Start the stack
+# 3. Start the stack
 docker compose up -d
 
-# Wait for all containers to be healthy
-./scripts/mangekyou-status.sh
+# 4. Fix cluster health (run this always)
+./scripts/fix-cluster.sh
 
-# Set up Kibana
+# 5. Generate Kibana token (REQUIRED on every fresh install)
+./scripts/setup-token.sh
+
+# 6. Set up Kibana
 ./scripts/setup-kibana.sh
 
-# Load detection rules
+# 7. Load detection rules
 ./scripts/setup-rules.sh
 
-# Build dashboards
+# 8. Build dashboards
 ./scripts/setup-dashboards.sh
+
+# 9. Test detections
+./scripts/test-detections.sh
+
+# 10. Check everything
+./scripts/mangekyou-status.sh
 ```
+
 
 ### Access
 
@@ -174,38 +185,3 @@ FAIDI Yassine
 </div>
 
 ---
-
-## 🚀 Correct Deployment Order (For Fresh Install)
-```bash
-# 1. Clone
-git clone https://github.com/YOUR_USERNAME/mangekyou.git
-cd mangekyou
-
-# 2. Prepare host
-sudo sysctl -w vm.max_map_count=262144
-sudo usermod -aG docker $USER && newgrp docker
-
-# 3. Start the stack
-docker compose up -d
-
-# 4. Fix cluster health (run this always)
-./scripts/fix-cluster.sh
-
-# 5. Generate Kibana token (REQUIRED on every fresh install)
-./scripts/setup-token.sh
-
-# 6. Set up Kibana
-./scripts/setup-kibana.sh
-
-# 7. Load detection rules
-./scripts/setup-rules.sh
-
-# 8. Build dashboards
-./scripts/setup-dashboards.sh
-
-# 9. Test detections
-./scripts/test-detections.sh
-
-# 10. Check everything
-./scripts/mangekyou-status.sh
-```
