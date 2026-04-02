@@ -1,0 +1,33 @@
+# ─────────────────────────────────────────
+#  Mangekyou - Filebeat Configuration
+# ─────────────────────────────────────────
+
+filebeat.inputs:
+
+  # System logs
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/syslog
+      - /var/log/auth.log
+      - /var/log/*.log
+    tags: ["system", "mangekyou"]
+
+  # Docker container logs
+  - type: container
+    enabled: true
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    tags: ["docker", "mangekyou"]
+
+# Send to Logstash
+output.logstash:
+  hosts: ["logstash:5044"]
+
+# Logging
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7

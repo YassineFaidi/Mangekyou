@@ -1,0 +1,139 @@
+
+# ─────────────────────────────────────────
+#  👁️  MANGEKYOU SIEM
+#  Containerised Security Information &
+#  Event Management System
+# ─────────────────────────────────────────
+
+networks:
+  mangekyou-net:
+    driver: bridge
+
+volumes:
+  esdata:
+    driver: local
+  kibanadata:
+    driver: local
+  logstashdata:
+    driver: local
+
+services:
+
+  # ─────────────────────────────
+  #  1. ELASTICSEARCH
+  #     The memory of Mangekyou
+  # ─────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    container_name: mangekyou-elasticsearch
+    environment:
+      - node.name=mangekyou-es
+      - cluster.name=mangekyou-cluster
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=${ES_JAVA_OPTS}
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "${ES_PORT}:9200"
+    networks:
+      - mangekyou-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD} http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  # ─────────────────────────────
+  #  2. KIBANA
+  #     The eye of Mangekyou
+  # ─────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
+    container_name: mangekyou-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVICEACCOUNTTOKEN=AAEAAWVsYXN0aWMva2liYW5hL21hbmdla3lvdS1raWJhbmEtdG9rZW46OEFOelIzeHpRaFNWbWVuVWdQZUpVQQ
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=mangekyou32charencryptionkey1234
+    volumes:
+      - kibanadata:/usr/share/kibana/data
+    ports:
+      - "${KIBANA_PORT}:5601"
+    networks:
+      - mangekyou-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────
+  #  3. LOGSTASH
+  #     The nerves of Mangekyou
+  # ─────────────────────────────
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION}
+    container_name: mangekyou-logstash
+    environment:
+      - LS_JAVA_OPTS=${LS_JAVA_OPTS}
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - logstashdata:/usr/share/logstash/data
+    ports:
+      - "${LOGSTASH_PORT}:5044"   # Beats input
+      - "5000:5000/udp"           # Syslog UDP
+      - "5001:5001/tcp"           # Syslog TCP
+      - "9600:9600"               # Logstash monitoring API
+    networks:
+      - mangekyou-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────
+  #  4. FILEBEAT
+  #     The ears of Mangekyou
+  # ─────────────────────────────
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION}
+    container_name: mangekyou-filebeat
+    command: filebeat -e --strict.perms=false
+    user: root
+    environment:
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log:ro                          # host system logs
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro  # docker logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # docker socket
+    networks:
+      - mangekyou-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────
+  #  5. ELASTALERT 2
+  #     The voice of Mangekyou
+  # ─────────────────────────────
+  elastalert:
+    image: jertel/elastalert2:latest
+    container_name: mangekyou-elastalert
+    volumes:
+      - ./elastalert/config.yaml:/opt/elastalert/config.yaml
+      - ./elastalert/rules:/opt/elastalert/rules
+    networks:
+      - mangekyou-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
